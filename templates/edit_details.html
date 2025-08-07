@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit MLS Point Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .edit-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .edit-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .edit-section h2 {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 15px;
+            margin: 0;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .info-item input, .info-item select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .info-item select {
+            background-color: white;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-cancel {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-save:hover {
+            background-color: #218838;
+        }
+
+        /* Form field validation styling */
+        .info-item input:invalid {
+            border-color: #dc3545;
+        }
+
+        .info-item .validation-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .info-item input:invalid + .validation-message {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-container">
+        <div class="edit-header">
+            <h1>Edit MLS Point Details</h1>
+            <div class="user-info">
+                <span>Current User: {{ current_user }}</span>
+                <span>UTC Time: {{ current_time }}</span>
+            </div>
+        </div>
+
+        <form action="/update_details/{{ info.mls_point_code }}" method="POST">
+            <div class="edit-content">
+                <div class="edit-section">
+                    <h2>Basic Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="mls_point_code">MLS Point Code:</label>
+                            <input type="text" id="mls_point_code" name="mls_point_code" value="{{ info.mls_point_code }}" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_name">MLS Point Name:</label>
+                            <input type="text" id="mls_point_name" name="mls_point_name" value="{{ info.mls_point_name }}" required>
+                        </div>
+                        <div class="info-item">
+                            <label for="district_code">District Code:</label>
+                            <input type="text" id="district_code" name="district_code" value="{{ info.district_code }}" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label for="district_name">District Name:</label>
+                            <input type="text" id="district_name" name="district_name" value="{{ info.district_name }}" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label for="mandal_code">Mandal Code:</label>
+                            <input type="text" id="mandal_code" name="mandal_code" value="{{ info.mandal_code }}" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label for="mandal_name">Mandal Name:</label>
+                            <input type="text" id="mandal_name" name="mandal_name" value="{{ info.mandal_name }}" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_address">Address:</label>
+                            <input type="text" id="mls_point_address" name="mls_point_address" value="{{ info.mls_point_address }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_latitude">Latitude:</label>
+                            <input type="text" id="mls_point_latitude" name="mls_point_latitude" value="{{ info.mls_point_latitude }}" pattern="^-?([1-8]?\d(\.\d+)?|90(\.0+)?)$">
+                            <span class="validation-message">Enter a valid latitude (-90 to 90)</span>
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_longitude">Longitude:</label>
+                            <input type="text" id="mls_point_longitude" name="mls_point_longitude" value="{{ info.mls_point_longitude }}" pattern="^-?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$">
+                            <span class="validation-message">Enter a valid longitude (-180 to 180)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-section">
+                    <h2>Incharge Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="mls_point_incharge_cfms_id">Incharge CFMS ID:</label>
+                            <input type="text" id="mls_point_incharge_cfms_id" name="mls_point_incharge_cfms_id" value="{{ info.mls_point_incharge_cfms_id }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_incharge_name">Incharge Name:</label>
+                            <input type="text" id="mls_point_incharge_name" name="mls_point_incharge_name" value="{{ info.mls_point_incharge_name }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="designation">Designation:</label>
+                            <input type="text" id="designation" name="designation" value="{{ info.designation }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="aadhaar_number">Aadhaar Number:</label>
+                            <input type="text" id="aadhaar_number" name="aadhaar_number" value="{{ info.aadhaar_number }}" pattern="^\d{12}$" maxlength="12">
+                            <span class="validation-message">Enter a valid 12-digit Aadhaar number</span>
+                        </div>
+                        <div class="info-item">
+                            <label for="phone_number">Phone Number:</label>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ info.phone_number }}" pattern="^\d{10}$" maxlength="10">
+                            <span class="validation-message">Enter a valid 10-digit phone number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-section">
+                    <h2>Nominee Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="nominee_incharge_cfms_id">Nominee CFMS ID:</label>
+                            <input type="text" id="nominee_incharge_cfms_id" name="nominee_incharge_cfms_id" value="{{ info.nominee_incharge_cfms_id }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="nominee_incharge_name">Nominee Name:</label>
+                            <input type="text" id="nominee_incharge_name" name="nominee_incharge_name" value="{{ info.nominee_incharge_name }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="nominee_designation">Nominee Designation:</label>
+                            <input type="text" id="nominee_designation" name="nominee_designation" value="{{ info.nominee_designation }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="nominee_aadhaar_number">Nominee Aadhaar Number:</label>
+                            <input type="text" id="nominee_aadhaar_number" name="nominee_aadhaar_number" value="{{ info.nominee_aadhaar_number }}" pattern="^\d{12}$" maxlength="12">
+                            <span class="validation-message">Enter a valid 12-digit Aadhaar number</span>
+                        </div>
+                        <div class="info-item">
+                            <label for="nominee_phone_number">Nominee Phone Number:</label>
+                            <input type="text" id="nominee_phone_number" name="nominee_phone_number" value="{{ info.nominee_phone_number }}" pattern="^\d{10}$" maxlength="10">
+                            <span class="validation-message">Enter a valid 10-digit phone number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-section">
+                    <h2>DEO Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="deo_cfms_id">DEO CFMS ID:</label>
+                            <input type="text" id="deo_cfms_id" name="deo_cfms_id" value="{{ info.deo_cfms_id }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="deo_name">DEO Name:</label>
+                            <input type="text" id="deo_name" name="deo_name" value="{{ info.deo_name }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="deo_aadhaar_number">DEO Aadhaar Number:</label>
+                            <input type="text" id="deo_aadhaar_number" name="deo_aadhaar_number" value="{{ info.deo_aadhaar_number }}" pattern="^\d{12}$" maxlength="12">
+                            <span class="validation-message">Enter a valid 12-digit Aadhaar number</span>
+                        </div>
+                        <div class="info-item">
+                            <label for="deo_phone_number">DEO Phone Number:</label>
+                            <input type="text" id="deo_phone_number" name="deo_phone_number" value="{{ info.deo_phone_number }}" pattern="^\d{10}$" maxlength="10">
+                            <span class="validation-message">Enter a valid 10-digit phone number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-section">
+                    <h2>Storage Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="storage_capacity_mts">Storage Capacity (MTs):</label>
+                            <input type="number" id="storage_capacity_mts" name="storage_capacity_mts" value="{{ info.storage_capacity_mts }}" min="0" step="0.01">
+                        </div>
+                        <div class="info-item">
+                            <label for="godown_area_sqft">Godown Area (sq.ft):</label>
+                            <input type="number" id="godown_area_sqft" name="godown_area_sqft" value="{{ info.godown_area_sqft }}" min="0" step="0.01">
+                        </div>
+                        <div class="info-item">
+                            <label for="mls_point_ownership">Ownership:</label>
+                            <select id="mls_point_ownership" name="mls_point_ownership">
+                                <option value="Owned" {% if info.mls_point_ownership == 'Owned' %}selected{% endif %}>Owned</option>
+                                <option value="Rented" {% if info.mls_point_ownership == 'Rented' %}selected{% endif %}>Rented</option>
+                                <option value="Leased" {% if info.mls_point_ownership == 'Leased' %}selected{% endif %}>Leased</option>
+                            </select>
+                        </div>
+                        <div class="info-item">
+                            <label for="rented_type">Rented Type:</label>
+                            <select id="rented_type" name="rented_type">
+                                <option value="" {% if not info.rented_type %}selected{% endif %}>N/A</option>
+                                <option value="Private" {% if info.rented_type == 'Private' %}selected{% endif %}>Private</option>
+                                <option value="AMC" {% if info.rented_type == 'AMC' %}selected{% endif %}>AMC</option>
+                                <option value="Other" {% if info.rented_type == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="info-item">
+                            <label for="weighbridge_available">Weighbridge Available:</label>
+                            <select id="weighbridge_available" name="weighbridge_available">
+                                <option value="Yes" {% if info.weighbridge_available == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if info.weighbridge_available == 'No' %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-section">
+                    <h2>Technology & Equipment</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label for="cc_cameras_installed">CC Cameras Installed:</label>
+                            <select id="cc_cameras_installed" name="cc_cameras_installed">
+                                <option value="Yes" {% if info.cc_cameras_installed == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if info.cc_cameras_installed == 'No' %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+                        <div class="info-item">
+                            <label for="cameras_working">Cameras Working:</label>
+                            <select id="cameras_working" name="cameras_working">
+                                <option value="Yes" {% if info.cameras_working == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if info.cameras_working == 'No' %}selected{% endif %}>No</option>
+                                <option value="Partial" {% if info.cameras_working == 'Partial' %}selected{% endif %}>Partial</option>
+                            </select>
+                        </div>
+                        <div class="info-item">
+                            <label for="camera_vendor">Camera Vendor:</label>
+                            <input type="text" id="camera_vendor" name="camera_vendor" value="{{ info.camera_vendor }}">
+                        </div>
+                        <div class="info-item">
+                            <label for="hamalies_working">Hamalies Working:</label>
+                            <input type="number" id="hamalies_working" name="hamalies_working" value="{{ info.hamalies_working }}" min="0">
+                        </div>
+                        <div class="info-item">
+                            <label for="stage2_vehicles_registered">Stage II Vehicles:</label>
+                            <input type="number" id="stage2_vehicles_registered" name="stage2_vehicles_registered" value="{{ info.stage2_vehicles_registered }}" min="0">
+                        </div>
+                        <div class="info-item">
+                            <label for="gps_installed_on_all_vehicles">GPS Installed on Vehicles:</label>
+                            <select id="gps_installed_on_all_vehicles" name="gps_installed_on_all_vehicles">
+                                <option value="Yes" {% if info.gps_installed_on_all_vehicles == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if info.gps_installed_on_all_vehicles == 'No' %}selected{% endif %}>No</option>
+                                <option value="Partial" {% if info.gps_installed_on_all_vehicles == 'Partial' %}selected{% endif %}>Partial</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="window.history.back()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-save">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Show or hide rented type field based on ownership selection
+        document.getElementById('mls_point_ownership').addEventListener('change', function() {
+            const rentedTypeField = document.getElementById('rented_type');
+            if (this.value === 'Rented') {
+                rentedTypeField.parentElement.style.display = 'flex';
+            } else {
+                rentedTypeField.value = '';
+                rentedTypeField.parentElement.style.display = 'none';
+            }
+        });
+
+        // Trigger the change event on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const ownershipField = document.getElementById('mls_point_ownership');
+            if (ownershipField) {
+                ownershipField.dispatchEvent(new Event('change'));
+            }
+
+            // Show CC camera vendor only if cameras are installed
+            const ccCamerasField = document.getElementById('cc_cameras_installed');
+            const cameraVendorField = document.getElementById('camera_vendor').parentElement;
+            const camerasWorkingField = document.getElementById('cameras_working').parentElement;
+
+            ccCamerasField.addEventListener('change', function() {
+                if (this.value === 'Yes') {
+                    cameraVendorField.style.display = 'flex';
+                    camerasWorkingField.style.display = 'flex';
+                } else {
+                    cameraVendorField.style.display = 'none';
+                    camerasWorkingField.style.display = 'none';
+                }
+            });
+
+            // Trigger on load
+            ccCamerasField.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>

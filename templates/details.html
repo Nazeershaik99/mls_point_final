@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLS Point Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="details-container">
+        <div class="details-header">
+            <h1>MLS Point Details</h1>
+            <div class="user-info">
+
+            </div>
+        </div>
+
+        <div class="details-content">
+            <div class="details-section">
+                <h2>Basic Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>MLS Point Code:</label>
+                        <span>{{ info.mls_point_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>MLS Point Name:</label>
+                        <span>{{ info.mls_point_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>District Code:</label>
+                        <span>{{ info.district_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>District Name:</label>
+                        <span>{{ info.district_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Mandal Code:</label>
+                        <span>{{ info.mandal_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Mandal:</label>
+                        <span>{{ info.mandal_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Address:</label>
+                        <span>{{ info.mls_point_address }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Coordinates:</label>
+                        <span>{{ info.mls_point_latitude }}, {{ info.mls_point_longitude }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Incharge Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Incharge Name:</label>
+                        <span>{{ info.mls_point_incharge_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Incharge CFMS ID:</label>
+                        <span>{{ info.mls_point_incharge_cfms_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Designation:</label>
+                        <span>{{ info.designation }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Phone Number:</label>
+                        <span>{{ info.phone_number }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>DEO Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>DEO Name:</label>
+                        <span>{{ info.deo_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>DEO CFMS ID:</label>
+                        <span>{{ info.deo_cfms_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>DEO Phone Number:</label>
+                        <span>{{ info.deo_phone_number }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Storage Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Storage Capacity:</label>
+                        <span>{{ info.storage_capacity_mts }} MTs</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Godown Area:</label>
+                        <span>{{ info.godown_area_sqft }} sq.ft</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ownership:</label>
+                        <span>{{ info.mls_point_ownership }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Weighbridge Available:</label>
+                        <span>{{ info.weighbridge_available }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Technology & Equipment</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>CC Cameras Installed:</label>
+                        <span>{{ info.cc_cameras_installed }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Camera Vendor:</label>
+                        <span>{{ info.camera_vendor }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Hamalies Working:</label>
+                        <span>{{ info.hamalies_working }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Stage II Vehicles:</label>
+                        <span>{{ info.stage2_vehicles_registered }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>GPS Installed on Vehicles:</label>
+                        <span>{{ info.gps_installed_on_all_vehicles }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-actions">
+                <button onclick="window.history.back()" class="btn-back">
+                    Go Back
+                </button>
+                <button onclick="window.location.href='/api/download_pdf/{{ info.mls_point_code }}'" class="btn-download">
+                    Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

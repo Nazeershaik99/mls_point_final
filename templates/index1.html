@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLS Point Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- Flash Messages Container -->
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+              <span class="flash-icon">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+              </span>
+              <span>{{ message }}</span>
+              <span class="flash-close" onclick="this.parentElement.remove()">&times;</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>MLS Point Dashboard</h1>
+            <div class="user-info">
+
+                <a href="/logout" class="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="district"><i class="fas fa-map-marker-alt"></i> District:</label>
+                <select id="district" name="district">
+                    <option value="">Select District</option>
+                    {% for district in districts %}
+                    <option value="{{ district }}">{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="mandal"><i class="fas fa-map"></i> Mandal:</label>
+                <select id="mandal" name="mandal" disabled>
+                    <option value="">Select Mandal</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="mls_code_search"><i class="fas fa-search"></i> Search by MLS Code:</label>
+                <div class="search-box">
+                    <input type="text" id="mls_code_search" name="mls_code_search" placeholder="Enter MLS Code..." class="search-input">
+                    <button id="search_btn" class="search-btn"><i class="fas fa-search"></i></button>
+                    <button id="clear_search_btn" class="clear-btn"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-summary">
+            <div class="summary-item">
+                <span class="summary-value" id="total_records">0</span>
+                <span class="summary-label">Total Records</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value" id="active_points">0</span>
+                <span class="summary-label">Active MLS Points</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value" id="total_capacity">0</span>
+                <span class="summary-label">Total Capacity (MTs)</span>
+            </div>
+
+        </div>
+
+        <div class="table-container">
+            <table id="mls-table">
+                <thead>
+                    <tr>
+                        <th>MLS Code</th>
+                        <th>Name</th>
+                        <th>District</th>
+                        <th>Mandal</th>
+                        <th>Incharge</th>
+                        <th>Storage Capacity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="mls-data">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+
+            <!-- No records message -->
+            <div id="no-records" class="no-records" style="display: none;">
+                <div class="no-records-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <p class="no-records-text">No MLS points found</p>
+                <p class="no-records-subtext">Try adjusting your search criteria</p>
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loading-indicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        $(document).ready(function() {
+            // Handle district selection
+            $('#district').change(function() {
+                const district = $(this).val();
+                const mandalSelect = $('#mandal');
+
+                // Reset mandal dropdown
+                mandalSelect.html('<option value="">Select Mandal</option>').prop('disabled', true);
+
+                if (district) {
+                    // Show loading indicator
+                    $('#loading-indicator').show();
+
+                    // Load mandals for selected district
+                    $.get(`/api/mandals/${district}`, function(mandals) {
+                        mandals.forEach(mandal => {
+                            mandalSelect.append(`<option value="${mandal}">${mandal}</option>`);
+                        });
+                        mandalSelect.prop('disabled', false);
+
+                        // Hide loading indicator
+                        $('#loading-indicator').hide();
+
+                        // Load data for the district
+                        loadFilteredData();
+                    });
+                } else {
+                    // If district is cleared, load all data
+                    loadFilteredData();
+                }
+            });
+
+            // Handle mandal selection and data loading
+            $('#mandal').change(function() {
+                loadFilteredData();
+            });
+
+            // Handle MLS code search
+            $('#search_btn').click(function() {
+                const searchCode = $('#mls_code_search').val().trim();
+                if (searchCode) {
+                    searchByMLSCode(searchCode);
+                } else {
+                    // If search box is empty, revert to filtered data
+                    loadFilteredData();
+                }
+            });
+
+            // Handle Enter key in search box
+            $('#mls_code_search').keypress(function(e) {
+                if (e.which === 13) { // Enter key
+                    $('#search_btn').click();
+                }
+            });
+
+            // Clear search and reset filters
+            $('#clear_search_btn').click(function() {
+                $('#mls_code_search').val('');
+                $('#district').val('');
+                $('#mandal').html('<option value="">Select Mandal</option>').prop('disabled', true);
+                loadFilteredData(); // Load all data
+            });
+
+            // Search by MLS code
+            function searchByMLSCode(code) {
+                // Show loading indicator
+                $('#loading-indicator').show();
+                $('#no-records').hide();
+
+                $.ajax({
+                    url: `/api/search_mls/${encodeURIComponent(code)}`,
+                    type: 'GET',
+                    success: function(data) {
+                        updateTable(data);
+
+                        // Update the summary
+                        $('#total_records').text(data.length);
+                        $('#active_points').text(data.length);
+
+                        // Calculate total capacity
+                        let totalCapacity = 0;
+                        data.forEach(record => {
+                            const capacity = parseFloat(record.storage_capacity_mts) || 0;
+                            totalCapacity += capacity;
+                        });
+                        $('#total_capacity').text(totalCapacity.toFixed(2));
+
+                        // Hide loading indicator
+                        $('#loading-indicator').hide();
+
+                        // Show no records message if needed
+                        if (data.length === 0) {
+                            $('#no-records').show();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error searching for MLS code:', error);
+                        // Hide loading indicator
+                        $('#loading-indicator').hide();
+                        // Show error message
+                        $('#mls-data').html(`<tr><td colspan="7" class="error-message">Error searching for MLS code: ${error}</td></tr>`);
+                    }
+                });
+            }
+
+            function loadFilteredData() {
+                // Show loading indicator
+                $('#loading-indicator').show();
+                $('#no-records').hide();
+
+                const district = $('#district').val();
+                const mandal = $('#mandal').val();
+
+                $.post('/get_filtered_data', {
+                    district_name: district || 'All',
+                    mandal_name: mandal || 'All'
+                }, function(response) {
+                    if (response.success) {
+                        updateTable(response.data);
+
+                        // Update the summary
+                        $('#total_records').text(response.data.length);
+                        $('#active_points').text(response.data.length);
+
+                        // Calculate total capacity
+                        let totalCapacity = 0;
+                        response.data.forEach(record => {
+                            const capacity = parseFloat(record.storage_capacity_mts) || 0;
+                            totalCapacity += capacity;
+                        });
+                        $('#total_capacity').text(totalCapacity.toFixed(2));
+
+                        // Show no records message if needed
+                        if (response.data.length === 0) {
+                            $('#no-records').show();
+                        }
+                    } else {
+                        console.error('Error loading data:', response.error);
+                        $('#mls-data').html(`<tr><td colspan="7" class="error-message">Error loading data: ${response.error}</td></tr>`);
+                    }
+
+                    // Hide loading indicator
+                    $('#loading-indicator').hide();
+                });
+            }
+
+            function updateTable(data) {
+                const tbody = $('#mls-data');
+                tbody.empty();
+
+                if (data.length === 0) {
+                    $('#no-records').show();
+                    return;
+                }
+
+                $('#no-records').hide();
+
+                data.forEach(record => {
+                    tbody.append(`
+                        <tr>
+                            <td>${record.mls_point_code || ''}</td>
+                            <td>${record.mls_point_name || ''}</td>
+                            <td>${record.district_name || ''}</td>
+                            <td>${record.mandal_name || ''}</td>
+                            <td>${record.mls_point_incharge_name || ''}</td>
+                            <td>${record.storage_capacity_mts || ''}</td>
+                            <td>
+                                <a href="/view_details/${record.mls_point_code}" class="btn-view" title="View Details">
+                                    <i class="fas fa-info-circle"></i> View
+                                </a>
+                                <a href="/edit_details/${record.mls_point_code}" class="btn-edit" title="Edit Details">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="/api/download_pdf/${record.mls_point_code}" class="btn-download" title="Download PDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+
+            // Initial data load
+            loadFilteredData();
+
+            // Automatically remove flash messages after 5 seconds
+            setTimeout(function() {
+                const flashMessages = document.querySelectorAll('.flash-message');
+                flashMessages.forEach(function(message) {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                });
+            }, 5000);
+        });
+    </script>
+
+    <style>
+        /* Additional styling for the search box */
+        .search-box {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            padding-right: 80px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #1e293b;
+            background-color: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .search-btn, .clear-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            padding: 0 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            transition: color 0.2s ease;
+        }
+
+        .search-btn {
+            right: 35px;
+            color: #3b82f6;
+        }
+
+        .search-btn:hover {
+            color: #1d4ed8;
+        }
+
+        .clear-btn:hover {
+            color: #dc2626;
+        }
+
+        /* Data summary section */
+        .data-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            background-color: #f8fafc;
+            border-top: 1px solid #eaedf1;
+            border-bottom: 1px solid #eaedf1;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .map-link {
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .map-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            display: none;
+            padding: 2rem;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 30px;
+            height: 30px;
+            margin: 0 auto 1rem auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .error-message {
+            color: #dc2626;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 500;
+        }
+
+        /* Added button for editing */
+        .btn-edit {
+            padding: 0.5rem 1rem;
+            margin: 0.2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-right: 0.5rem;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+    </style>
+</body>
+</html>

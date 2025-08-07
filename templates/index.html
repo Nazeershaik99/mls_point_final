@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MLS Point Locator</title>
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.7.0/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/5988/5988658.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <style>
+      /* Add styling for the edit button */
+      .edit-btn {
+        background-color: #ffc107;
+        color: #333;
+        padding: 8px 15px;
+        border-radius: 4px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+        margin-right: 10px;
+        font-size: 14px;
+      }
+
+      .edit-btn:hover {
+        background-color: #e0a800;
+      }
+
+      .popup-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      /* Updated popup button styles with proper text color */
+      .popup-btn {
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .view-btn {
+        background-color: #0056b3;
+        color: white !important; /* Force white text color */
+      }
+
+      .edit-btn-popup {
+        background-color: #ffc107;
+        color: #333 !important; /* Force dark text color */
+      }
+
+      /* Fix for Leaflet popup links */
+      .leaflet-popup-content a {
+        color: inherit !important; /* Use the color defined by parent */
+        text-decoration: none;
+      }
+
+      .leaflet-popup-content .popup-btn i {
+        color: inherit !important; /* Make icons match text color */
+      }
+
+      /* Updated styling for user info and logout button */
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* User icon */
+      .user-info i.fa-user-circle {
+        font-size: 18px;
+        color: #3b82f6;
+      }
+
+      /* Username */
+      .user-info #currentUser {
+        font-weight: 500;
+        color: #333;
+        margin-right: 4px;
+      }
+
+      /* Logout button */
+      .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        border: 1px solid #e2e8f0;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .logout-btn:hover {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border-color: #fecaca;
+      }
+
+      .time-info {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #666;
+        z-index: 1000;
+      }
+
+      /* Flash messages styling */
+      .flash-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+      }
+
+      .flash-message {
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+      }
+
+      .flash-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+      }
+
+      .flash-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-left: 4px solid #ffc107;
+      }
+
+      .flash-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+      }
+
+      .flash-icon {
+        margin-right: 10px;
+      }
+
+      .flash-close {
+        margin-left: auto;
+        cursor: pointer;
+        font-size: 16px;
+        opacity: 0.6;
+      }
+
+      .flash-close:hover {
+        opacity: 1;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* Nav button styling */
+      .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        color: #334155;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .nav-btn:hover {
+        background-color: #f1f5f9;
+        color: #3b82f6;
+      }
+
+      .nav-btn i {
+        font-size: 16px;
+      }
+
+      /* Status indicator */
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background-color: rgba(16, 185, 129, 0.1);
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #059669;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
+
+      /* Header right section spacing */
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .header-right {
+          gap: 10px;
+        }
+
+        .nav-btn {
+          padding: 6px 10px;
+          font-size: 13px;
+        }
+
+        .nav-btn span {
+          display: none;
+        }
+
+        .status-indicator span {
+          display: none;
+        }
+
+        .status-indicator {
+          padding: 6px;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="mls-page">
+    <!-- Flash Messages Container -->
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+              <span class="flash-icon">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+              </span>
+              <span>{{ message }}</span>
+              <span class="flash-close" onclick="this.parentElement.remove()">&times;</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+
+
+    <div class="main-container">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <div class="logo">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <h1 class="header-title">MLS Point Locator</h1>
+        </div>
+        <div class="header-right">
+          <div class="status-indicator" id="statusIndicator">
+            <div class="status-dot"></div>
+            <span id="statusText">Online</span>
+          </div>
+          <button class="nav-btn" onclick="window.location.href='/dashboard'">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+          </button>
+          <div class="user-info">
+
+            <a href="/logout" class="logout-btn" title="Logout">
+              <i class="fas fa-sign-out-alt"></i>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <!-- Quick Search -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-search"></i>
+            Quick Search
+          </h3>
+          <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="mlsCodeSearch" class="search-input" placeholder="Enter MLS Point Code..." autocomplete="off" />
+            <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+          </div>
+          <button class="btn btn-primary" onclick="searchByMLSCode()" id="searchBtn">
+            <i class="fas fa-search"></i>
+            Search Point
+          </button>
+        </div>
+
+        <!-- Location Filter -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-map"></i>
+            Location Filter
+          </h3>
+          <div class="form-group">
+            <label class="form-label" for="district">District</label>
+            <select id="district" class="form-select">
+              <option value="">Choose a district...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="mandal">Mandal</label>
+            <select id="mandal" class="form-select" disabled>
+              <option value="">Choose a mandal...</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="loadMLSPoints()" id="loadBtn" disabled>
+            <i class="fas fa-map-marker-alt"></i>
+            Load Points
+          </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-chart-bar"></i>
+            Status
+          </h3>
+          <div class="quick-stats">
+            <div class="stat-item">
+              <span class="stat-number" id="totalPoints">0</span>
+              <span class="stat-label">Total Points</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="activePoints">0</span>
+              <span class="stat-label">Active</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div id="map"></div>
+        <div class="map-controls">
+          <button class="map-control-btn" onclick="resetMapView()" title="Reset View">
+            <i class="fas fa-home"></i>
+          </button>
+          <button class="map-control-btn" onclick="toggleFullscreen()" title="Fullscreen">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+        <div id="statusBanner" class="status-banner">
+          <span id="bannerText"></span>
+        </div>
+      </main>
+
+      <!-- Details Panel -->
+      <section class="details-panel" id="detailsPanel">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <h3>Welcome to MLS Locator</h3>
+          <p>
+            Select an MLS point from the map or use the search functionality to view detailed information and generate reports.
+          </p>
+          <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+
+
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Hidden PDF Template Container -->
+    <div id="pdfTemplateContainer" style="display: none; position: absolute; left: -9999px; top: -9999px;">
+      <!-- PDF Template will be inserted here -->
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script>
+      // Initialize map variables
+      let map;
+      let mlsMarkers = [];
+      let currentPopup = null;
+
+      // Function to show status messages
+      function showStatus(message, type = "info") {
+        const banner = document.getElementById("statusBanner");
+        if (banner) {
+          banner.className = `status-banner ${type}`;
+          banner.innerHTML = `<span id="bannerText">${message}</span>`;
+          banner.style.display = "block";
+          setTimeout(() => (banner.style.display = "none"), 5000);
+        }
+      }
+
+      // Create enhanced popup content with Edit button
+      function createPopupContent(point) {
+        return `
+          <div class="popup-content">
+            <div class="popup-title">${point.mls_point_name || ''}</div>
+            <div class="popup-info">
+              <strong>Code:</strong> ${point.mls_point_code || ''}<br>
+              <strong>District:</strong> ${point.district_name || ''}<br>
+              <strong>Mandal:</strong> ${point.mandal_name || ''}<br>
+              <strong>Incharge:</strong> ${point.mls_point_incharge_name || ''}<br>
+              <strong>Contact:</strong> ${point.phone_number || ''}
+            </div>
+
+          </div>
+        `;
+      }
+
+      // Function to clear markers
+      function clearMarkers() {
+        if (map) {
+          mlsMarkers.forEach(marker => map.removeLayer(marker));
+          mlsMarkers = [];
+        }
+      }
+
+      // Function to display point details in the panel
+      function showPointDetails(point) {
+        const detailsPanel = document.getElementById('detailsPanel');
+        if (!detailsPanel) return;
+
+        detailsPanel.innerHTML = `
+          <div class="point-details">
+            <h3>${point.mls_point_name || 'MLS Point'}</h3>
+            <div class="details-grid">
+              <div class="detail-item">
+                <span class="detail-label">Code:</span>
+                <span class="detail-value">${point.mls_point_code || ''}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">District:</span>
+                <span class="detail-value">${point.district_name || ''}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Mandal:</span>
+                <span class="detail-value">${point.mandal_name || ''}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Incharge:</span>
+                <span class="detail-value">${point.mls_point_incharge_name || ''}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Contact:</span>
+                <span class="detail-value">${point.phone_number || ''}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Storage:</span>
+                <span class="detail-value">${point.storage_capacity_mts || ''} MTs</span>
+              </div>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+              <a href="/view_details/${point.mls_point_code}" class="btn btn-primary">
+                <i class="fas fa-info-circle"></i> View Details
+              </a>
+
+              <a href="/api/download_pdf/${point.mls_point_code}" class="btn btn-secondary">
+                <i class="fas fa-file-pdf"></i> Download PDF
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      // Function to search for MLS points by code
+      function searchByMLSCode() {
+        const searchTerm = document.getElementById('mlsCodeSearch').value.trim();
+        if (searchTerm.length < 1) {
+          showStatus("Please enter an MLS Point Code to search", "warning");
+          return;
+        }
+
+        showStatus("Searching for MLS Point...", "info");
+        clearMarkers();
+
+        fetch(`/api/search_mls/${encodeURIComponent(searchTerm)}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(points => {
+            if (!Array.isArray(points)) {
+              throw new Error("Invalid response format");
+            }
+
+            if (points.length === 0) {
+              showStatus("No MLS points found matching your search", "warning");
+              return;
+            }
+
+            points.forEach(point => {
+              if (point.mls_point_latitude && point.mls_point_longitude) {
+                let lat = parseFloat(point.mls_point_latitude);
+                let lng = parseFloat(point.mls_point_longitude);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  let marker = L.marker([lat, lng]).addTo(map);
+                  marker.bindPopup(createPopupContent(point));
+                  mlsMarkers.push(marker);
+
+                  // Show the first point's details in the panel
+                  if (mlsMarkers.length === 1) {
+                    showPointDetails(point);
+                  }
+                }
+              }
+            });
+
+            if (mlsMarkers.length > 0) {
+              map.fitBounds(L.featureGroup(mlsMarkers).getBounds(), { padding: [40, 40] });
+              showStatus(`Found ${points.length} MLS points`, "success");
+            } else {
+              showStatus("Found MLS points but no valid coordinates", "warning");
+            }
+          })
+          .catch(error => {
+            console.error('Search error:', error);
+            showStatus(`Error: ${error.message}`, "error");
+          });
+      }
+
+      // Clear search function
+
+      // Function to load MLS points
+      function loadMLSPoints() {
+        clearMarkers();
+        const districtSelect = document.getElementById('district');
+        const mandalSelect = document.getElementById('mandal');
+
+        if (!districtSelect || !mandalSelect) return;
+
+        const district = districtSelect.value;
+        const mandal = mandalSelect.value;
+
+        if (!district || !mandal) {
+          showStatus("Please select both district and mandal", "error");
+          return;
+        }
+
+        showStatus("Loading MLS Points...", "info");
+
+        fetch(`/api/mls_points/${encodeURIComponent(district)}/${encodeURIComponent(mandal)}`)
+          .then(res => {
+            if (!res.ok) {
+              return res.json().then(err => {
+                throw new Error(err.error || `HTTP error! status: ${res.status}`);
+              });
+            }
+            return res.json();
+          })
+          .then(points => {
+            if (!Array.isArray(points)) {
+              throw new Error("Invalid response format");
+            }
+
+            if (points.length === 0) {
+              showStatus("No MLS points found for selected location", "warning");
+              return;
+            }
+
+            points.forEach(point => {
+              if (point.mls_point_latitude && point.mls_point_longitude) {
+                let lat = parseFloat(point.mls_point_latitude);
+                let lng = parseFloat(point.mls_point_longitude);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  let marker = L.marker([lat, lng]).addTo(map);
+                  marker.bindPopup(createPopupContent(point));
+                  mlsMarkers.push(marker);
+                }
+              }
+            });
+
+            if (mlsMarkers.length > 0) {
+              map.fitBounds(L.featureGroup(mlsMarkers).getBounds(), { padding: [40, 40] });
+              showStatus(`Loaded ${mlsMarkers.length} MLS points`, "success");
+
+              // Show first point in details panel
+              if (points.length > 0) {
+                showPointDetails(points[0]);
+              }
+
+              // Update stats
+              document.getElementById('totalPoints').textContent = mlsMarkers.length;
+              document.getElementById('activePoints').textContent = mlsMarkers.length;
+            } else {
+              showStatus("No valid coordinates found for MLS points", "warning");
+            }
+          })
+          .catch(error => {
+            console.error('Error loading MLS points:', error);
+            showStatus(`Error: ${error.message}`, "error");
+          });
+      }
+
+      // Reset map view
+      function resetMapView() {
+        if (map) {
+          map.setView([16.5, 80.6], 7);
+        }
+      }
+
+      // Toggle fullscreen
+      function toggleFullscreen() {
+        const mapElement = document.querySelector('.main-content');
+
+        if (!document.fullscreenElement) {
+          if (mapElement.requestFullscreen) {
+            mapElement.requestFullscreen();
+          } else if (mapElement.mozRequestFullScreen) { /* Firefox */
+            mapElement.mozRequestFullScreen();
+          } else if (mapElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            mapElement.webkitRequestFullscreen();
+          } else if (mapElement.msRequestFullscreen) { /* IE/Edge */
+            mapElement.msRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+          }
+        }
+      }
+
+      // Initialize map on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map
+        map = L.map('map').setView([16.5, 80.6], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Apply custom CSS to fix popup button text colors
+        const style = document.createElement('style');
+        style.textContent = `
+          .leaflet-popup-content .view-btn { color: white !important; }
+          .leaflet-popup-content .view-btn i { color: white !important; }
+          .leaflet-popup-content .view-btn span { color: white !important; }
+          .leaflet-popup-content .edit-btn-popup { color: #333 !important; }
+          .leaflet-popup-content .edit-btn-popup i { color: #333 !important; }
+          .leaflet-popup-content .edit-btn-popup span { color: #333 !important; }
+        `;
+        document.head.appendChild(style);
+
+        // Load districts
+        const districtSelect = document.getElementById("district");
+        const mandalSelect = document.getElementById("mandal");
+        const loadBtn = document.getElementById("loadBtn");
+
+        if (districtSelect) {
+          fetch('/api/districts')
+            .then(res => res.json())
+            .then(districts => {
+              districtSelect.innerHTML = `<option value="">Choose a district...</option>`;
+              districts.forEach(district => {
+                districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+              });
+              districtSelect.disabled = false;
+            })
+            .catch(error => {
+              console.error('Error loading districts:', error);
+              showStatus("Error loading districts", "error");
+            });
+        }
+
+        // District change handler
+        if (districtSelect && mandalSelect) {
+          districtSelect.addEventListener('change', function() {
+            mandalSelect.innerHTML = `<option value="">Choose a mandal...</option>`;
+            mandalSelect.disabled = true;
+            if (loadBtn) loadBtn.disabled = true;
+
+            if (!this.value) return;
+
+            fetch(`/api/mandals/${this.value}`)
+              .then(res => res.json())
+              .then(mandals => {
+                mandalSelect.innerHTML = `<option value="">Choose a mandal...</option>`;
+                mandals.forEach(mandal => {
+                  mandalSelect.innerHTML += `<option value="${mandal}">${mandal}</option>`;
+                });
+                mandalSelect.disabled = false;
+              })
+              .catch(error => {
+                console.error('Error loading mandals:', error);
+                showStatus("Error loading mandals", "error");
+              });
+          });
+        }
+
+        // Mandal change handler
+        if (mandalSelect && loadBtn) {
+          mandalSelect.addEventListener('change', function() {
+            loadBtn.disabled = !this.value;
+          });
+        }
+
+        // Add search on enter key
+        const searchInput = document.getElementById('mlsCodeSearch');
+        if (searchInput) {
+          searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              searchByMLSCode();
+            }
+          });
+        }
+
+        // Automatically remove flash messages after 5 seconds
+        setTimeout(function() {
+          const flashMessages = document.querySelectorAll('.flash-message');
+          flashMessages.forEach(function(message) {
+            message.style.transition = 'opacity 0.5s ease-out';
+            message.style.opacity = '0';
+            setTimeout(function() {
+              message.remove();
+            }, 500);
+          });
+        }, 5000);
+
+        // Check user session status
+        fetch('/api/user')
+          .catch(error => {
+            console.error('Error checking user session:', error);
+            // If there's an error (likely due to session expiration), redirect to login page
+            window.location.href = '/login';
+          });
+
+        // Update time info with current time
+        document.querySelector('.time-info').textContent = '{{ current_time|default("2025-08-07 09:31:29") }}';
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLS Point Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .details-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .details-section h2 {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 15px;
+            margin: 0;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .details-section h2 .edit-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            padding: 5px 0;
+        }
+
+        .details-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-back {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-download {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .btn-back:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-download:hover {
+            background-color: #004494;
+        }
+
+        .btn-edit:hover {
+            background-color: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <div class="details-header">
+            <h1>MLS Point Details</h1>
+            <div class="user-info">
+                <span>Current User: JPKrishna28</span>
+                <span>UTC Time: 2025-08-06 10:40:11</span>
+            </div>
+        </div>
+
+        <div class="details-content">
+            <div class="details-section">
+                <h2>
+                    Basic Information
+                </h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>MLS Point Code:</label>
+                        <span>{{ info.mls_point_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>MLS Point Name:</label>
+                        <span>{{ info.mls_point_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>District Code:</label>
+                        <span>{{ info.district_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>District Name:</label>
+                        <span>{{ info.district_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Mandal Code:</label>
+                        <span>{{ info.mandal_code }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Mandal Name:</label>
+                        <span>{{ info.mandal_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Address:</label>
+                        <span>{{ info.mls_point_address }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Coordinates:</label>
+                        <span>{{ info.mls_point_latitude }}, {{ info.mls_point_longitude }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Incharge Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Incharge CFMS ID:</label>
+                        <span>{{ info.mls_point_incharge_cfms_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Incharge Name:</label>
+                        <span>{{ info.mls_point_incharge_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Designation:</label>
+                        <span>{{ info.designation }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Phone Number:</label>
+                        <span>{{ info.phone_number }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Aadhaar Number:</label>
+                        <span>{{ info.aadhaar_number }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Nominee Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Nominee CFMS ID:</label>
+                        <span>{{ info.nominee_incharge_cfms_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Nominee Name:</label>
+                        <span>{{ info.nominee_incharge_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Nominee Designation:</label>
+                        <span>{{ info.nominee_designation }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Nominee Phone Number:</label>
+                        <span>{{ info.nominee_phone_number }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>DEO Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>DEO CFMS ID:</label>
+                        <span>{{ info.deo_cfms_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>DEO Name:</label>
+                        <span>{{ info.deo_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>DEO Aadhaar:</label>
+                        <span>{{ info.deo_aadhaar_number }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>DEO Phone Number:</label>
+                        <span>{{ info.deo_phone_number }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Storage Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Storage Capacity (MTs):</label>
+                        <span>{{ info.storage_capacity_mts }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Godown Area (sq.ft):</label>
+                        <span>{{ info.godown_area_sqft }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ownership:</label>
+                        <span>{{ info.mls_point_ownership }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Rented Type:</label>
+                        <span>{{ info.rented_type }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Weighbridge Available:</label>
+                        <span>{{ info.weighbridge_available }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2>Technology & Equipment</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>CC Cameras Installed:</label>
+                        <span>{{ info.cc_cameras_installed }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Cameras Working:</label>
+                        <span>{{ info.cameras_working }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Camera Vendor:</label>
+                        <span>{{ info.camera_vendor }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Hamalies Working:</label>
+                        <span>{{ info.hamalies_working }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Stage II Vehicles:</label>
+                        <span>{{ info.stage2_vehicles_registered }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>GPS Installed on Vehicles:</label>
+                        <span>{{ info.gps_installed_on_all_vehicles }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-actions">
+                <button onclick="window.history.back()" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+                <button onclick="window.location.href='/edit_details/{{ info.mls_point_code }}'" class="btn btn-edit">
+                    <i class="fas fa-edit"></i> Edit Details
+                </button>
+                <button onclick="window.location.href='/api/download_pdf/{{ info.mls_point_code }}'" class="btn btn-download">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
